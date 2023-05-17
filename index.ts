@@ -14,17 +14,18 @@ const port = 5001;
 
 const socketIO = require("socket.io")(http, {
   cors: {
-    origin: "*",
+    origin: "*"
   },
 });
 
 //Add this before the app.get() block
 let users: Users[] = [];
+const socketNamespace = socketIO.of("/api");
 
-socketIO.on('connection', (socket: Socket) => {
+socketNamespace.on('connection', (socket: Socket) => {
   console.log(`⚡: ${socket.id} user just connected!`);
   socket.on('message', (data) => {
-    socketIO.emit('messageResponse', data);
+    socketNamespace.emit('messageResponse', data);
   });
   socket.on('typing', (data) => {socket.broadcast.emit('typingResponse', data);  console.log(data);});
  
@@ -35,7 +36,7 @@ socketIO.on('connection', (socket: Socket) => {
     users.push(data);
   
     //Sends the list of users to the client
-    socketIO.emit('newUserResponse', users);
+    socketNamespace.emit('newUserResponse', users);
   });
 
   socket.on('disconnect', () => {
@@ -44,7 +45,7 @@ socketIO.on('connection', (socket: Socket) => {
     users = users.filter((user) => user.socketID !== socket.id);
     // console.log(users);
     //Sends the list of users to the client
-    socketIO.emit('newUserResponse', users);
+    socketNamespace.emit('newUserResponse', users);
     socket.disconnect();
   });
 });
@@ -56,11 +57,11 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Express + TypeScript Server");
 });
 
-app.get("/api", (req: Request, res: Response) => {
-  res.json({
-    message: "Hello world",
-  });
-});
+// app.get("/api", (req: Request, res: Response) => {
+//   res.json({
+//     message: "Hello world",
+//   });
+// });
 
 http.listen(port, () => {
   console.log(`⚡️[server]: Server is running on ${port} port`);
